@@ -1,0 +1,13 @@
+{
+    "directory":{
+        "backup":"/home/user/dirs",
+        "destination":"/usb/user/backups"
+    },
+    "parameters":{
+        "max-backups":"5",
+        "backup-wp-dbs":"true"
+    }
+
+
+
+}
