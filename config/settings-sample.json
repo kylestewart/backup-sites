@@ -1,12 +1,11 @@
 {
-    "directory":{
-        "source":"/home/user/webapps",
-        "destination":"/home/user//backups"
-    },
-    "parameters":{
-        "max-archives":"3",
+    "backup":{
+        "source":"/usr/apps",
+        "destination":"/usr/backups",
+        "max-archives":"5",
+        "autoprune":true,
         "backup_wp_dbs":true,
-        "compression":false
-    }
+        "compression":true
+    }    
 
 }
