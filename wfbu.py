@@ -40,11 +40,24 @@ class backup:
             os.makedirs(archive)
         return(archive)
 
-#Prune old backup directories, as defined in the settings file
-    def prune_archives(self):
+#Get a list of archives and sort the list by creation time
+    def list_archives(self):
         archives = []
         for dir in os.listdir(self.destination):
-             archives.append(os.path.join(self.destination,dir))
+            archives.append(os.path.join(self.destination,dir))
+        archives = sorted(archives, key=os.path.getctime)
+        return(archives)
+
+#Return the name of the newest archive directory
+    def get_newest_archive(self):
+        archives = self.list_archives()
+        newest_index = len(archives) - 1
+        newest_archive = archives[newest_index]
+        return (newest_archive)
+
+#Prune old backup directories, as defined in the settings file
+    def prune_archives(self):
+        archives = self.list_archives()
         if len(archives) > self.maxarchives:
             toPrune = int(len(archives)) - int(self.maxarchives)
             archives = sorted(archives, key=os.path.getctime)
@@ -75,28 +88,28 @@ class backup:
                 shutil.make_archive(os.path.join(zipdir,dir),'zip',zipdir,os.path.join(self.source,dir))
             else:
                 shutil.copytree(os.path.join(self.source,dir),os.path.join(dstPath,dir))
+        
         if self.backup_wp_dbs:
-            wp_installs = self.identify_wp_installs()
-            if len(wp_installs) > 0:
-                self._backup_wp_databases(dstPath,wp_installs)
-            else:
-                print("No WP Installs were found")
+            self.backup_wp_databases()
+        
         if self.autoprune:
             self.prune_archives()
-        print("{} : {}".format("File archiving complete in directory",dstPath))
+        
         if self.remote:
             self.remote_upload()
         return("Archiving Complete")
 
 
-#Take a list of WP Installs, snag the DB credentials, and take the dumps.  At the moment this is not intended to be called directly outside of the archive_files method.
-    def _backup_wp_databases(self,dstPath,wpInstalls):
+#Take a list of WP Installs, snag the DB credentials, and take the dumps.  The newest created archive dir will get the dump files.
+    def backup_wp_databases(self):
+        wpInstalls = self.identify_wp_installs()
         for install in wpInstalls:
-            dbinfo = {}
-            srcdir = os.path.join(self.source,install)
-            dstdir = os.path.join(dstPath,install)
-            myconf = os.path.join(dstdir,"mylogin.cnf")
-            target = os.path.join(dstdir,install) + ".sql"
+            dbinfo  = {}
+            srcdir  = os.path.join(self.source,install)
+            dstPath = os.path.join(self.destination,self.get_newest_archive())
+            dstdir  = os.path.join(dstPath,install)
+            myconf  = os.path.join(dstdir,"mylogin.cnf")
+            target  = os.path.join(dstdir,install) + ".sql"
             with open(os.path.join(srcdir,'wp-config.php')) as config_file:
                 for line in config_file:
                     name = re.search('define\(\'DB_NAME\'\,\ ?\'(?P<dbname>.*)\'\);',line)
@@ -140,8 +153,9 @@ class backup:
 
 #Until boto3 supports directory syncing, we'll use this method to shell out and use the aws CLI.
     def remote_upload(self):
+        src = self.get_newest_archive()
         dest = "s3://" + self.bucket_name + self.remote_folder
-        cmd = "{} {} {} {} {} {}".format("aws","s3","sync",self.destination,dest,"--delete")
+        cmd = "{} {} {} {} {} {}".format("aws","s3","sync",src,dest,"--delete")
         subprocess.run(cmd,shell = True)
         return("Upload Complete")
 
