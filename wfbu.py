@@ -4,6 +4,7 @@ import datetime
 import json
 import re
 import subprocess
+import boto3 #AWS Remote, installed via pip
 
 _script_path = os.path.dirname(os.path.realpath(__file__))
 _settings_path = os.path.join(_script_path,"config")
@@ -16,12 +17,17 @@ class backup:
             config = json.load(settings_file)
 
 #Load the config values        
-        self.source = config["backup"]["source"]
-        self.destination = config["backup"]["destination"]
-        self.maxarchives = int(config["backup"]["max-archives"])
-        self.autoprune = config["backup"]["autoprune"]
+        self.source        = config["backup"]["source"]
+        self.destination   = config["backup"]["destination"]
+        self.maxarchives   = config["backup"]["max_archives"]
+        self.autoprune     = config["backup"]["autoprune"]
         self.backup_wp_dbs = config["backup"]["backup_wp_dbs"]
-        self.compression = config["backup"]["compression"]
+        self.compression   = config["backup"]["compression"]
+        self.remote        = config["remote"]["enable_remote_upload"]
+        self.access_key    = config["remote"]["aws_access_key_id"]
+        self.secret_key    = config["remote"]["aws_secret_access_key"]
+        self.bucket_name   = config["remote"]["bucket_name"]
+        self.remote_folder = config["remote"]["folder"]
 
 #Create datestamped archive directory at destination
     def create_archive_dir(self):
@@ -61,7 +67,6 @@ class backup:
 
 #Backup content of source directories
     def archive_files(self):
-        archives = []
         dstPath = self.create_archive_dir()
         for dir in os.listdir(self.source):
             if self.compression:
@@ -78,7 +83,11 @@ class backup:
                 print("No WP Installs were found")
         if self.autoprune:
             self.prune_archives()
-        return("{} : {}".format("File archiving complete in directory",dstPath))
+        print("{} : {}".format("File archiving complete in directory",dstPath))
+        if self.remote:
+            self.remote_upload()
+        return("Archiving Complete")
+
 
 #Take a list of WP Installs, snag the DB credentials, and take the dumps.  At the moment this is not intended to be called directly outside of the archive_files method.
     def _backup_wp_databases(self,dstPath,wpInstalls):
@@ -111,3 +120,29 @@ class backup:
             subprocess.run(args, shell=True)
             os.remove(myconf)
         return("Database backup complete")
+
+
+#Use boto3 to create a session with S3
+    def remote_connect(self):
+        session = boto3.Session(
+            aws_access_key_id=self.access_key,
+            aws_secret_access_key=self.secret_key,
+        )
+        return(session)
+
+    def remote_ls_buckets(self):
+        buckets = []
+        session = self.connect()
+        s3 = session.resource('s3')
+        for bucket in s3.buckets.all():
+            buckets.append(bucket)
+        return(buckets)
+
+#Until boto3 supports directory syncing, we'll use this method to shell out and use the aws CLI.
+    def remote_upload(self):
+        dest = "s3://" + self.bucket_name + self.remote_folder
+        cmd = "{} {} {} {} {} {}".format("aws","s3","sync",self.destination,dest,"--delete")
+        subprocess.run(cmd,shell = True)
+        return("Upload Complete")
+
+

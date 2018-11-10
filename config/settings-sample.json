@@ -1,11 +1,19 @@
 {
     "backup":{
-        "source":"/usr/apps",
-        "destination":"/usr/backups",
-        "max-archives":"5",
-        "autoprune":true,
-        "backup_wp_dbs":true,
-        "compression":true
-    }    
+        "source":"/home/user/files",
+        "destination":"/home/user/backups",
+        "max_archives":2,
+        "autoprune":false,
+        "backup_wp_dbs":false,
+        "compression":false
+    },
+    "remote":{
+        "enable_remote_upload":false,
+        "aws_access_key_id":"BIG-KEY-HERE",
+        "aws_secret_access_key":"EVEN-BIGGER-KEY-HERE",
+        "aws_region":"us-west-4",
+        "bucket_name":"my-bucket",
+        "folder":"/backups"
+    }
 
 }
