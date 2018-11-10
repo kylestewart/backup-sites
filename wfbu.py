@@ -155,7 +155,7 @@ class backup:
     def remote_upload(self):
         src = self.get_newest_archive()
         dest = "s3://" + self.bucket_name + self.remote_folder
-        cmd = "{} {} {} {} {} {}".format("aws","s3","sync",src,dest,"--delete")
+        cmd = "{} {} {} {} {} {} {}".format("aws","s3","sync",src,dest,"--size-only","--delete")
         subprocess.run(cmd,shell = True)
         return("Upload Complete")
 
