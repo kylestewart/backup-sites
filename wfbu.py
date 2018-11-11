@@ -81,13 +81,20 @@ class backup:
 #Backup content of source directories
     def archive_files(self):
         dstPath = self.create_archive_dir()
-        for dir in os.listdir(self.source):
+        for object in os.listdir(self.source):
             if self.compression:
-                zipdir = os.path.join(dstPath,dir)
-                os.makedirs(zipdir)
-                shutil.make_archive(os.path.join(zipdir,dir),'zip',zipdir,os.path.join(self.source,dir))
+                if os.path.isfile(os.path.join(self.source,object)):
+                    zipfile = os.path.join(dstPath,object)
+                    shutil.make_archive(zipfile,'zip',dstPath,os.path.join(self.source,object))
+                if os.path.isdir(os.path.join(self.source,object)):
+                    zipdir = os.path.join(dstPath,object)
+                    os.makedirs(zipdir)
+                    shutil.make_archive(os.path.join(zipdir,object),'zip',zipdir,os.path.join(self.source,object))
             else:
-                shutil.copytree(os.path.join(self.source,dir),os.path.join(dstPath,dir))
+                if os.path.isfile(os.path.join(self.source,object)):
+                    shutil.copyfile(os.path.join(self.source,object),os.path.join(dstPath,object))
+                if os.path.isdir(os.path.join(self.source,object)):
+                    shutil.copytree(os.path.join(self.source,object),os.path.join(dstPath,object))
         
         if self.backup_wp_dbs:
             self.backup_wp_databases()
