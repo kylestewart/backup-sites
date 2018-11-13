@@ -6,31 +6,10 @@ import re
 import subprocess
 import boto3 #AWS Remote, installed via pip
 
-_script_path = os.path.dirname(os.path.realpath(__file__))
-_settings_path = os.path.join(_script_path,"config")
-_settings_file = os.path.join(_settings_path,"settings.json")
-
 class backup:
-    def __init__(self):
-#First we will load everything from our settings file        
-        with open(_settings_file) as settings_file:
-            config = json.load(settings_file)
-
-#Load the config values        
-        self.source        = config["backup"]["source"]
-        self.destination   = config["backup"]["destination"]
-        self.maxarchives   = config["backup"]["max_archives"]
-        self.autoprune     = config["backup"]["autoprune"]
-        self.backup_wp_dbs = config["backup"]["backup_wp_dbs"]
-        self.compression   = config["backup"]["compression"]
-        self.remote        = config["remote"]["enable_remote_upload"]
-        self.access_key    = config["remote"]["aws_access_key_id"]
-        self.secret_key    = config["remote"]["aws_secret_access_key"]
-        self.bucket_name   = config["remote"]["bucket_name"]
-        self.remote_folder = config["remote"]["folder"]
 
 #Create datestamped archive directory at destination
-    def create_archive_dir(self):
+    def create_archive_dir(destination):
         date = datetime.datetime.now().strftime('%Y-%m-%d_%H%M')
         archive = os.path.join(self.destination,date)
         try:
