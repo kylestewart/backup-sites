@@ -4,7 +4,7 @@ I needed to automate the backups for the web apps on my hosting provider, Webfac
 
 I am still learning, and this project has already evolved quite a bit in the short time I've been working on it.  I am maintaining a backlog of user stories to help manage what I add or fix next, so it is by no means "done".  That said, if you managed to find this somehow, I am open to feedback and would appreciate the opportunity to learn something new.
 
-#Elevator Pitch
+# Elevator Pitch
 
 Backup a directory of files and subdirectories to another location.  Automatically identify WordPress installs, parse their configs, and get dumps of their databases.  Optionally compress or not compress, and also auto-upload the newest archive to S3.
 
